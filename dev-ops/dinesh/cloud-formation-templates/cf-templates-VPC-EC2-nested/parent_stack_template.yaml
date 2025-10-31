@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Parent stack to orchestrate VPC, EC2, and RDS nested stacks
+Parameters:
+  VPCStackTemplateURL:
+    Type: String
+    Description: S3 URL of the VPC module template
+  EC2StackTemplateURL:
+    Type: String
+    Description: S3 URL of the EC2 module template
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Ref: VPCStackTemplateURL
+      Tags:
+      - Key: Module
+        Value: VPC
+      - Key: Environment
+        Value: Dev
+  EC2Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Ref: EC2StackTemplateURL
+      Parameters:
+        VpcId:
+          Fn::GetAtt:
+          - VPCStack
+          - Outputs.VpcId
+        SubnetId:
+          Fn::GetAtt:
+          - VPCStack
+          - Outputs.PublicSubnetId
+        InstanceType: t2.micro
+      Tags:
+      - Key: Module
+        Value: EC2
+      - Key: Environment
+        Value: Dev
