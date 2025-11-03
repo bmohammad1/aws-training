@@ -1,0 +1,47 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: RDS Stack
+
+Parameters:
+  DBUsername:
+    Type: String
+  DBPassword:
+    Type: String
+    NoEcho: true
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    AllowedValues:
+      - db.t3.micro
+      - db.t3.small
+    Description: Choose an allowed DB instance class
+  Subnet1:
+    Type: AWS::EC2::Subnet::Id
+  Subnet2:
+    Type: AWS::EC2::Subnet::Id
+
+Resources:
+  MyDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds:
+        - !Ref Subnet1
+        - !Ref Subnet2
+
+  MyRDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: mydbinstance
+      AllocatedStorage: 20
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: mysql
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      VPCSecurityGroups: []
+      DBSubnetGroupName: !Ref MyDBSubnetGroup
+      PubliclyAccessible: false
+
+Outputs:
+  RDSInstanceEndpoint:
+    Value: !GetAtt MyRDSInstance.Endpoint.Address
