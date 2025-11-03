@@ -1,0 +1,27 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Parent Stack for VPC and EC2
+
+Parameters:
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+    Description: Select an allowed EC2 instance type\
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Choose a subnet 
+  EC2TemplateURL:
+    Type: String
+
+Resources:
+  EC2Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref EC2TemplateURL
+      Parameters:
+        InstanceType: !Ref InstanceType
+        SubnetId: !Ref SubnetId
