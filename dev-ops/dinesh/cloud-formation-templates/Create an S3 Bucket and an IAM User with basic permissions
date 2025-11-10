@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create an S3 Bucket and an IAM User with basic permissions
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: mys3bucket
+
+  IAMUserName:
+    Type: String
+    Description: dominic
+
+Resources:
+  MyS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+
+  MyIAMUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref IAMUserName
+
+  MyIAMPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: S3AccessPolicy
+      Users:
+        - !Ref MyIAMUser
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+              - s3:PutObject
+            Resource:
+              - !Sub "arn:aws:s3:::${BucketName}"
+              - !Sub "arn:aws:s3:::${BucketName}/*"
+
+Outputs:
+  CreatedBucketName:
+    Description: The name of the created S3 bucket
+    Value: !Ref MyS3Bucket
+
+  IAMUserARN:
+    Description: The ARN of the created IAM user
+    Value: !GetAtt MyIAMUser.Arn
