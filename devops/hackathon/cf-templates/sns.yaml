@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create SNS Topic and Email Subscription
+
+Parameters:
+  Team:
+    Type: String
+    Description: Team name for the SNS topic
+  EmailAddress:
+    Type: String
+    Description: Email address to subscribe to the SNS topic
+
+Resources:
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'evoke-hackathon-${Team}-topic'  
+      Tags:
+        - Key: Event
+          Value: Hackathon
+        - Key: Team
+          Value: !Ref Team
+
+  SNSEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: !Ref EmailAddress
+      TopicArn: !Ref SNSTopic
+
+Outputs:
+  TopicArn:
+    Value: !Ref SNSTopic
+    Description: ARN of the SNS Topic
