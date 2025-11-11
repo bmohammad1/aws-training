@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Parent CloudFormation template to orchestrate user, S3 bucket, and EC2 instance provisioning via nested stacks.
+
+Parameters:
+  # User parameters
+  Team:
+    Description: Name of the team - small case and no spaces or special characters
+    Type: String
+  UserPassword:
+    Description: Custom password for the IAM User (must meet AWS password requirements)
+    Type: String
+    NoEcho: true
+  # Common parameters
+  EventName:
+    Description: Name of the event - small case and no spaces or special characters
+    Type: String
+    Default: vibecoding
+  # EC2 parameters
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t3.micro
+    AllowedValues: [t3a.large, t3.micro]
+  SecurityGroupIds:
+    Description: List of security group IDs for the EC2 instance
+    Type: List<AWS::EC2::SecurityGroup::Id>
+  # Template URLs
+  UserTemplateUrl:
+    Description: S3 URL to the IAM user CloudFormation template
+    Type: String
+  S3TemplateUrl:
+    Description: S3 URL to the S3 bucket CloudFormation template
+    Type: String
+  EC2TemplateUrl:
+    Description: S3 URL to the EC2 CloudFormation template
+    Type: String
+
+Resources:
+  UserStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref UserTemplateUrl
+      Parameters:
+        UserPassword: !Ref UserPassword
+        EventName: !Ref EventName
+        Team: !Ref Team
+
+  S3Stack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: UserStack
+    Properties:
+      TemplateURL: !Ref S3TemplateUrl
+      Parameters:
+        EventName: !Ref EventName
+        Team: !Ref Team
+
+  EC2Stack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: S3Stack
+    Properties:
+      TemplateURL: !Ref EC2TemplateUrl
+      Parameters:
+        # Owner: !Ref Team
+        Team: !Ref Team
+        EventName: !Ref EventName
+        SecurityGroupIds: !Join [",", !Ref SecurityGroupIds]
+        InstanceType: !Ref InstanceType
+
+Outputs:
+  IAMUserName:
+    Description: Returns the IAM user name from the User stack
+    Value: !GetAtt UserStack.Outputs.IAMUserName
+  ConsoleLogin:
+    Description: Returns the console login URL from the User stack
+    Value: !GetAtt UserStack.Outputs.ConsoleLogin
+  S3BucketName:
+    Description: Returns the bucket name from the S3 stack
+    Value: !GetAtt S3Stack.Outputs.BucketName
+  EC2InstanceId:
+    Description: Returns the EC2 instance ID from the EC2 stack
+    Value: !GetAtt EC2Stack.Outputs.InstanceId

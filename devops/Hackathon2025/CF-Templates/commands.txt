@@ -1,0 +1,67 @@
+#!/bin/bash
+# Log output (optional for manual session)
+exec > /tmp/golden-ami-setup.log 2>&1
+
+# Update packages
+sudo yum update -y
+
+# Install Docker
+sudo dnf install -y docker
+sudo systemctl enable --now docker
+sudo systemctl start docker
+
+# Install Docker Compose (latest)
+DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
+sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Install NGINX
+sudo yum install -y nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx
+
+# Install Node.js + npm (using Amazon Linux Extras, for latest stable)
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo dnf install nodejs -y
+
+# Install Python (latest version available from yum)
+sudo yum install -y python3
+
+# Install Java 21 (from Adoptium)
+sudo curl -L -o /tmp/OpenJDK21.tar.gz "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12/OpenJDK21U-jdk_x64_linux_hotspot_21.0.1_12.tar.gz"
+sudo mkdir -p /opt/java21
+sudo tar -xzf /tmp/OpenJDK21.tar.gz -C /opt/java21 --strip-components=1
+echo 'export JAVA_HOME=/opt/java21' | sudo tee /etc/profile.d/java21.sh
+echo 'export PATH=$JAVA_HOME/bin:$PATH' | sudo tee -a /etc/profile.d/java21.sh
+source /etc/profile.d/java21.sh
+
+
+
+Test is Java installed?
+source /etc/profile.d/java21.sh
+java --version
+
+You put Java in /opt/java21 and exported the following lines:
+export JAVA_HOME=/opt/java21
+export PATH=$JAVA_HOME/bin:$PATH
+But unless you run source /etc/profile.d/java21.sh (or restart login shell), Java won’t be found automatically.
+
+
+# Install postgresql 17
+sudo dnf install -y postgresql17-server postgresql17
+mkdir -p /var/lib/pgsql/17/data
+chown postgres:postgres /var/lib/pgsql/17/data
+sudo -u postgres /usr/bin/initdb -D /var/lib/pgsql/17/data
+mkdir -p /etc/systemd/system/postgresql@main.service.d
+cat > /etc/systemd/system/postgresql@main.service.d/override.conf <<EOF
+[Service]
+Environment=PGDATA=/var/lib/pgsql/17/data
+EOF
+systemctl daemon-reload
+systemctl enable postgresql@main
+systemctl start postgresql@main
+sudo -u postgres psql --version
+systemctl status postgresql@main --no-pager
+
+Test : psql --version
+

@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  CleanBuckets:
+    Type: Custom::InvokeLambda1
+    Properties:
+      ServiceToken: arn:aws:lambda:ap-south-1:992914516109:function:Clean_Buckets
+      # Any properties passed here will be forwarded as the event to the lambda
+
+  EnableApiTermination:
+    Type: Custom::InvokeLambda2
+    Properties:
+      ServiceToken: arn:aws:lambda:ap-south-1:992914516109:function:EC2_Disable_Termination_Protection
+      # Any properties passed here will be forwarded as the event
