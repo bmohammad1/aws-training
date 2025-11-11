@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create an Amazon SQS Queue
+
+Parameters:
+  Team:
+    Type: String
+    Description: Team name for tagging the SQS queue
+
+Resources:
+  MySQSQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub 'evoke-hackathon-${Team}-queue'
+      VisibilityTimeout: 30        # Time (in seconds) a message stays invisible after being read
+      MessageRetentionPeriod: 86400 # 1 day (in seconds)
+      DelaySeconds: 0              # Delay before messages become available
+      ReceiveMessageWaitTimeSeconds: 20 # Long polling duration
+      Tags:
+        - Key: Event
+          Value: Hackathon
+        - Key: Team
+          Value: !Ref Team
+
+Outputs:
+  QueueURL:
+    Description: URL of the created SQS Queue
+    Value: !Ref MySQSQueue
