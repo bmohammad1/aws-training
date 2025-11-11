@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EC2 instance with Docker, Docker Compose, NGINX and postgres
+
+Parameters:
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t3.micro
+    AllowedValues: 
+      - t3.micro
+      - t3a.large
+  IAMInstanceProfile:
+    Description: Name of the IAM instance profile for SSM access (e.g., with AmazonSSMManagedInstanceCore policy)
+    Type: String
+    Default: EC2SSMRole
+  SecurityGroupIds:
+    Description: List of security group IDs to associate with the EC2 instance
+    Type: List<AWS::EC2::SecurityGroup::Id>
+
+Resources:
+  GoldenHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref IAMInstanceProfile
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}"
+      SecurityGroupIds: !Ref SecurityGroupIds
+      Tags:
+        - Key: Name
+          Value: GoldenAMI-Preparation
+        - Key: Project
+          Value: Hackathon2025
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          exec > /var/log/golden-ami-setup.log 2>&1
+
+          # Update packages
+          sudo dnf update -y
+
+          # Install Docker 
+          sudo dnf install -y docker
+          sudo systemctl enable --now docker
+          sudo systemctl start docker
+
+          # Install Docker Compose (latest)
+          DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
+          sudo curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+          # Install NGINX
+          sudo yum install -y nginx
+          sudo systemctl enable nginx
+          sudo systemctl start nginx
+
+          # Install postgresql 17
+          sudo dnf install -y postgresql17-server postgresql17
+          mkdir -p /var/lib/pgsql/17/data
+          chown postgres:postgres /var/lib/pgsql/17/data
+          sudo -u postgres /usr/bin/initdb -D /var/lib/pgsql/17/data
+          mkdir -p /etc/systemd/system/postgresql@main.service.d
+          cat > /etc/systemd/system/postgresql@main.service.d/override.conf <<EOF
+          [Service]
+          Environment=PGDATA=/var/lib/pgsql/17/data
+          EOF
+          systemctl daemon-reload
+          systemctl enable postgresql@main
+          systemctl start postgresql@main
+          sudo -u postgres psql --version
+          systemctl status postgresql@main --no-pager
+
+Outputs:
+  InstanceId:
+    Description: "ID of the created EC2 instance"
+    Value: !Ref GoldenHost
+  PublicIP:
+    Description: "Public IP of the created EC2 instance"
+    Value: !GetAtt [ GoldenHost, PublicIp ]

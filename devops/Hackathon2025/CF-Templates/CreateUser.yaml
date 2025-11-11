@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  CloudFormation template to create an IAM user with a custom password, attach to a specified user group, and enable console access.
+
+Parameters:
+  Team:
+    Description: Name of the team
+    Type: String
+  UserPassword:
+    Description: Custom password for the IAM User (must meet AWS password requirements)
+    Type: String
+    NoEcho: true
+  EventName:
+    Description: Name of the event
+    Type: String
+    Default: vibecoding
+
+Resources:
+  MyIAMUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref Team
+      LoginProfile:
+        Password: !Ref UserPassword
+        PasswordResetRequired: false 
+      Tags:
+        - Key: Event
+          Value: Hackathon
+        - Key: EventName
+          Value: !Ref EventName
+        - Key: Team
+          Value: !Ref Team
+
+  UserToGroupAttachment:
+    DependsOn: MyIAMUser
+    Type: AWS::IAM::UserToGroupAddition
+    Properties:
+      GroupName: hackathon
+      Users:
+        - !Ref MyIAMUser
+
+Outputs:
+  IAMUserName:
+    Description: The IAM User Name
+    Value: !Ref MyIAMUser
+  ConsoleLogin:
+    Description: AWS Console Login URL for this account
+    Value: !Sub "https://${AWS::AccountId}.signin.aws.amazon.com/console"

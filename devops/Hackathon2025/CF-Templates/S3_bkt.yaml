@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create S3 bucket with dynamic name including team name
+
+Parameters:
+  EventName:
+    Description: Name of the event
+    Type: String
+    Default: vibecoding
+  Team:
+    Description: Name of the team
+    Type: String
+Resources:
+  TeamS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'evoke-hackathon-${Team}-bucket'  
+      Tags:
+        - Key: Event
+          Value: Hackathon
+        - Key: EventName
+          Value: !Ref EventName
+        - Key: Team
+          Value: !Ref Team
+        - Key: Owner
+          Value: !Ref Team
+Outputs:
+  BucketName:
+    Description: The created S3 bucket name
+    Value: !Ref TeamS3Bucket
