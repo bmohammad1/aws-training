@@ -5,9 +5,6 @@ Parameters:
   Team:
     Type: String
     Description: Team name for the SNS topic
-  EmailAddress:
-    Type: String
-    Description: Email address to subscribe to the SNS topic
 
 Resources:
   SNSTopic:
@@ -19,13 +16,6 @@ Resources:
           Value: Hackathon
         - Key: Team
           Value: !Ref Team
-
-  SNSEmailSubscription:
-    Type: AWS::SNS::Subscription
-    Properties:
-      Protocol: email
-      Endpoint: !Ref EmailAddress
-      TopicArn: !Ref SNSTopic
 
 Outputs:
   TopicArn:
