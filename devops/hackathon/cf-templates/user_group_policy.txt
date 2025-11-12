@@ -1,0 +1,47 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:RebootInstances",
+                "ec2:DescribeAddresses",
+                "ec2:DescribeInstances",
+                "ec2:StartInstances",
+                "ec2:DescribeTags",
+                "ec2:DescribeVpcs",
+                "ec2:DescribeVolumes",
+                "ec2:AssociateAddress",
+                "ec2:StopInstances",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeInstanceStatus"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "ec2:ResourceTag/Team": "${aws:PrincipalTag/Team}"
+                }
+            }
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": "ec2:DescribeInstances",
+            "Resource": "*"
+        },
+        {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": [
+                "ssm:SendCommand",
+                "ssm:GetConnectionStatus",
+                "ssm:DescribeInstanceInformation",
+                "ssm:DescribeSessions",
+                "ssm:TerminateSession",
+                "ssm:StartSession"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
