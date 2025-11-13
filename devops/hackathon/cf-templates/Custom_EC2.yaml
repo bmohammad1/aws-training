@@ -16,6 +16,9 @@ Parameters:
     Description: EC2 instance type
     Type: String
     AllowedValues: [t3a.large, t3.micro]
+  KeyPairName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
   SecurityGroupIds:
     Description: List of security group IDs for the EC2 instance
     Type: CommaDelimitedList
@@ -27,6 +30,7 @@ Resources:
       ImageId: !Sub '{{resolve:ssm:/evoke/ami/hackathon/vibecoding}}'
       InstanceType: !Ref InstanceType
       IamInstanceProfile: EC2SSMRole
+      KeyName: !Ref KeyPairName
       SecurityGroupIds: !Ref SecurityGroupIds
       DisableApiTermination: true 
       BlockDeviceMappings:

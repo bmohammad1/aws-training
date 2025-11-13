@@ -22,6 +22,9 @@ Parameters:
     Type: String
     Default: t3.micro
     AllowedValues: [t3a.large, t3.micro]
+  KeyPairName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
   SecurityGroupIds:
     Description: List of security group IDs for the EC2 instance
     Type: List<AWS::EC2::SecurityGroup::Id>
@@ -64,6 +67,7 @@ Resources:
         # Owner: !Ref Team
         Team: !Ref Team
         EventName: !Ref EventName
+        KeyPairName: !Ref KeyPairName
         SecurityGroupIds: !Join [",", !Ref SecurityGroupIds]
         InstanceType: !Ref InstanceType
 
