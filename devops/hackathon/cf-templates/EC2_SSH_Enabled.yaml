@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Launch EC2 instance from any AMI, with tags and proper parameters
+
+Parameters:
+  # Owner:
+  #   Description: Owner of the instance
+  #   Type: String
+  Team:
+    Description: Team name
+    Type: String
+  EventName:
+    Description: Event name
+    Type: String
+    Default: vibecoding
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    AllowedValues: [t3a.large, t3.micro]
+  KeyPairName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+  SecurityGroupIds:
+    Description: List of security group IDs for the EC2 instance
+    Type: CommaDelimitedList
+
+Resources:
+  GoldenHostInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Sub '{{resolve:ssm:/evoke/ami/hackathon/vibecoding}}'
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: EC2SSMRole
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds: !Ref SecurityGroupIds
+      DisableApiTermination: true 
+      BlockDeviceMappings:
+      - DeviceName: /dev/xvda           # check your AMI if it uses xvda or sda1 for root
+        Ebs:
+          VolumeSize: 30                
+          VolumeType: gp3               
+          DeleteOnTermination: true
+      Tags:
+        - Key: Owner
+          Value: !Ref Team
+        - Key: Name
+          Value: !Sub "${Team}-server"
+        - Key: Event
+          Value: Hackathon
+        - Key: EventName
+          Value: !Ref EventName
+        - Key: Team
+          Value: !Ref Team
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${Team}-ElasticIP"
+        - Key: Event
+          Value: Hackathon
+        - Key: EventName
+          Value: !Ref EventName
+        - Key: Team
+          Value: !Ref Team
+
+  EipAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ElasticIp.AllocationId
+      InstanceId: !Ref GoldenHostInstance
+
+Outputs:
+  InstanceId:
+    Description: "ID of the created EC2 instance"
+    Value: !Ref GoldenHostInstance
